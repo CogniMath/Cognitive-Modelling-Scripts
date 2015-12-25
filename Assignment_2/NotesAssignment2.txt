@@ -1,0 +1,62 @@
+	
+	 	
+	points	
+	 	
+	max	
+	 	
+	 	
+
+DM per condition per subject	
+	 	
+	1	
+	 	
+	2	
+	-1	
+	Participants use the same DM in multiple conditions, without much time between the different conditions. In the real experiment the different conditions were tested on different days, so you could either use a new DM or let sufficient time pass between conditions.	
+
+add to DM / retrieve from DM	
+	 	
+	3	
+	 	
+	3	
+	 	
+	 	
+
+timing in experiment	
+	 	
+	2	
+	 	
+	3	
+	-1	
+	No time passes between add encounter and activation calculation. This way the latest stimulus is never taken into account.	
+
+outline of experiment setup	
+	 	
+	2	
+	 	
+	3	
+	-1	
+	Code doesn't run	
+
+blending	
+	 	
+	0	
+	 	
+	2	
+	-2	
+	Blending is not implemented	
+
+plot	
+	 	
+	0	
+	 	
+	2	
+	-2	
+	No plot	
+
+total	
+	 	
+	8	
+	 	
+	15	
+
