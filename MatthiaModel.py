@@ -9,28 +9,19 @@
 #The general idea behind the model is to test if previous trials have an influence on the performances during 
 #the next trials.
 
+#LEARN DICTIONARIES 
+#FIXME save the responsetimes + block and interval
 
+import matplotlib.pyplot as plt
 import numpy as np
 import random
 import math
-import csv
+
 
 actr_a = 1.1
 actr_b = 0.015
 actr_t0 = 11
 actr_decay_rate = 0.5
-
-num_subjects = 18 #According to the .csv file
-num_sessions = 5
-num_trials = 120
-
-
-def plot_existing_data():
-	
-	with open ('#name.csv', 'rb') as csvfile:
-		data = csv.reader(csvfile, delimiter=' ', quotechar='|') #FIXME when you have the data
-		for row in in data:
-			print(', '.join(row))
 
 
 def create_declarative_memory(chunks):
@@ -50,31 +41,41 @@ def get_encounters(dm, pulse):
 	return dm[pulse]
 
 
-def actr_b(encounters, current_time):
+def Actr_b(encounters, current_time):
 	
-	assert(current_time >= max(encounters), "ERROR!")	#assert function skips if the code is correctly otherwise error message
+	#assert(current_time >= max(encounters), "ERROR!")	#assert function skips if the code is correctly otherwise error message
+	if len(encounters) == 0:
+		return None
 
 	delta_times = [current_time - i for i in encounters]
 	powered_times = [i**-actr_decay_rate for i in delta_times]
-
 	return math.log(sum(powered_times))
 
 
 def blending(dm,current_time):
+
+	#print(dm)
 
 	activations = []
 	tot = 0
 
 	for p in range(1,len(dm)):
 		enc = get_encounters(dm, p)
-		activations.append(actr_b(enc,current_time))
+		act = Actr_b(enc,current_time)
+		if act is None:
+			act = 0
+		activations.append(act)
+
+	if len(activations) == 0:
+		return None
 
 	for i in range(1,len(activations)):
 		tot += i*activations[i-1]
-
-	blended_value = tot/sum(activations)
 	
-	return blended_value
+	if sum(activations) !=0:
+		return int(tot/sum(activations))
+	else:
+		return None
 
 
 def uniform_condition(a):
@@ -92,11 +93,11 @@ def uniform_condition(a):
 		vec_c.append(1200)
 		vec_d.append(1600)
 
-	conc_vector = np.concatenate(vec_a,vec_b,vec_c,vec_d)
-	uniform_vector = np.random.shuffle(conc_vector)
 
-	return uni_vec
+	conc_vector = vec_a+vec_b+vec_c+vec_d
+	uniform_vector = sorted(conc_vector, key=lambda k:random.random())
 
+	return uniform_vector
 
 
 def exponential_condition(a,b,c,d):
@@ -120,10 +121,10 @@ def exponential_condition(a,b,c,d):
 	for m in range(d):
 		vec_d.append(1600)
 
-	conc_vector = np.concatenate(vec_a,vec_b,vec_c,vec_d)
-	expo_vector = np.random.shuffle(conc_vector)
-
-	return expo_vec
+	conc_vector = vec_a+vec_b+vec_c+vec_d
+	expo_vector = sorted(conc_vector, key=lambda k:random.random())
+	
+	return expo_vector
 
 
 def anti_exponential_condition(a,b,c,d):
@@ -147,19 +148,18 @@ def anti_exponential_condition(a,b,c,d):
 	for m in range(d):
 		vec_d.append(1600)
 
-	conc_vector = np.concatenate(vec_a,vec_b,vec_c,vec_d)
-	anti_expo_vector = np.random.shuffle(conc_vector)
+	conc_vector = vec_a+vec_b+vec_c+vec_d
+	anti_expo_vector = sorted(conc_vector, key=lambda k:random.random())
 
-	return anti_expo_vec
+	return anti_expo_vector
 
 	
 
 def actr_noise(s):	#noise function that produces some randomness while running the experiment
-
+	
 	n_random = random.uniform(0.0001, 0.9999)
-	s*math.log((1-n_random)/n_random)
-
-	return s
+	noise = s*math.log((1-n_random)/n_random)
+	return noise
 
 def pulse_into_time(num_pulses): #converts number of pulses into time
 
@@ -189,22 +189,45 @@ def time_into_pulse(time):	#converts time intervals into pulses
 
 def run_model(num_subjects, num_sessions):
 
+	blocks = []
+	sessions = []
+	responses = []
+
+	data_dictionary = {'Block':'[]', 'Intervals':'[]', 'ResponseTimes':'[]'}
+
 	for i in range(1,num_subjects):
 
-		subject_clock = 0
-		subject_DM = create_declarative_memory(120,120) #number of chunks and encounters, 120 because
-														#of the 4 different foreperiods and relative estimations 
-		for j in range(1, num_sessions):
+		#print(dict)
 
-			if(j=1 or j=3 or j=5):
+		subject_clock = 0
+		subject_DM = create_declarative_memory(120) #number of chunks, 120 because
+														#of the 4 different foreperiods  
+		for j in range(1, num_sessions):
+			
+			if(j==1 or j==3 or j==5):
+
+				#blocks.append(num_sessions)
+				#data_dictionary['Block'].append(num_sessions)
 
 				uniform_foreperiod = uniform_condition(30)
 
 				for time in uniform_foreperiod:
+
+					sessions.append(time)
+					#print(time)
+					#data_dictionary['Intervals'].append(time)
+					
 					subject_clock = subject_clock + time 
-					pulse_estimation = time_into_pulse(subject_clock)
-					blended_value = blending(subject_DM, subject_clock) #check what the function gets as input
-					blended_value_converted = pulse_into_time(blended_value_converted)
+					pulse_estimation = time_into_pulse(time)
+
+					#data_dictionary['ResponseTimes'].append(pulse_estimation)
+					responses.append(pulse_estimation)
+					print(responses)
+					print(type(responses))
+					update_declarative_memory(subject_DM, pulse_estimation,subject_clock)
+					subject_clock += 5 #play with it
+					blended_value = blending(subject_DM, subject_clock) 
+					blended_value_converted = pulse_into_time(blended_value)
 
 					if blended_value_converted > pulse_estimation:
 						subject_clock = subject_clock + 50 #penality of 5000 ms added 
@@ -213,13 +236,16 @@ def run_model(num_subjects, num_sessions):
 						update_declarative_memory(subject_DM, pulse_estimation, subject_clock)
 					#run the uniform condition
 			
-			elif(j=2):
+			elif(j==2):
 
+				blocks.append(num_sessions)
 				exponential_foreperiod = exponential_condition(64,32,16,8)
 				
 				for time in exponential_foreperiod:
-					subject_clock = subject_clock + random.uniform(250,850) + time
-					pulse_estimation = time_into_pulse(subject_clock)
+					subject_clock = subject_clock + time
+					pulse_estimation = time_into_pulse(time)
+					update_declarative_memory(subject_DM,pulse_estimation,subject_clock)
+					subject_clock += 5
 					blended_value = blending(subject_DM, subject_clock) 
 					blended_value_converted = pulse_into_time(blended_value)
 
@@ -230,13 +256,16 @@ def run_model(num_subjects, num_sessions):
 						update_declarative_memory(subject_DM, pulse_estimation, subject_clock)
 					#run the exponential condition
 			
-			elif(j=4):
+			elif(j==4):
 				
+				blocks.append(num_sessions)
 				antiexponential_foreperiod = anti_exponential_condition(8,16,32,64)
 				
 				for time in antiexponential_foreperiod:
-					subject_clock = subject_clock + random.uniform(250,850) + time
-					pulse_estimation = time_into_pulse(subject_clock)					
+					subject_clock = subject_clock + time
+					pulse_estimation = time_into_pulse(time)
+					update_declarative_memory(subject_DM,pulse_estimation,subject_clock)
+					subject_clock += 5					
 					blended_value = blending(subject_DM, subject_clock) 
 					blended_value_converted = pulse_into_time(blended_value)
 
@@ -248,13 +277,17 @@ def run_model(num_subjects, num_sessions):
 					
 				#run the antiexponential condition 
 
+			print(num_sessions)
+
 
 if __name__ == "__main__":
 
+	run_model(18,5)
 
 
 
 
-"""FIXME the results aren't perfectly matching with the R function
+
+"""FIXME the results aren't perfectly matching with the R functions
 But the code still seems correct, check the 2 functions separetly once the model is working
 """
